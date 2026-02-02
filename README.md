@@ -65,15 +65,16 @@
 ---
 
 ## 📸 Скриншоты
-
-**All tab**
 ![Gallery All](Docs/images/gallery_all.png)
 
-**Even tab**
+---
+
 ![Gallery Even](Docs/images/gallery_even.png)
 
-**Premium popup**
+---
+
 ![Gallery Premium](Docs/images/premium_popup.png)
 
-**Image popup**
+---
+
 ![Gallery Base](Docs/images/base_popup.png)
