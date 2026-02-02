@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06077a0d0bb24561a6fe438b1dd5c2c1, type: 3}
+  m_Name: New Menu Screen Config Asset
+  m_EditorClassIdentifier: 
+  _baseUrl: https://data.ikppbb.com/test-task-unity-data/pics/
+  _imagesCount: 66
+  _premiumEvery: 4
+  _phoneColumns: 2
+  _tabletColumns: 3
+  _tabletMinSidePixels: 1200
+  _textureCacheCapacity: 24
+  _requestTimeoutSeconds: 30
+  _lazyLoadBufferRows: 2
+  _cancelLoadOutsideRange: 1
