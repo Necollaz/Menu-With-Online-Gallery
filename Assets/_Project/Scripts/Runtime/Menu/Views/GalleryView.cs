@@ -3,214 +3,175 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using MenuWithOnlineGallery.Common;
+using MenuWithOnlineGallery.Gallery.Layout;
+using MenuWithOnlineGallery.MenuScreen;
+using MenuWithOnlineGallery.RemoteImages;
 
-public sealed class GalleryView : MonoBehaviour, ICoroutineRunner
+namespace MenuWithOnlineGallery.Gallery
 {
-    public event Action<GalleryImageModel> ItemClicked;
-    
-    [Header("References")]
-    [SerializeField] private MenuScreenConfigAsset _configAsset;
-    [SerializeField] private ScrollRect _scrollRect;
-    [SerializeField] private RectTransform _viewport;
-    [SerializeField] private RectTransform _content;
-    [SerializeField] private GridLayoutGroup _gridLayoutGroup;
-    [SerializeField] private GalleryItemView _itemPrefab;
-
-    private readonly GridVisibleRangeCalculator _visibleRangeCalculator = new GridVisibleRangeCalculator();
-    private readonly GalleryItemViewsCollection _itemViewsCollection = new GalleryItemViewsCollection();
-    private readonly GalleryItemViewPool _itemViewPool = new GalleryItemViewPool();
-    
-    private TextureCache _textureCache;
-    private RemoteTextureLoader _remoteTextureLoader;
-    
-    private GalleryGridLayoutApplier _gridLayoutApplier;
-    private GalleryLazyLoadRangeUpdater _lazyLoadRangeUpdater;
-    
-    private void Awake()
+    public sealed class GalleryView : MonoBehaviour, ICoroutineRunner
     {
-        EnsureInitialized();
-        _gridLayoutApplier.Apply();
-    }
+        public event Action<GalleryImageModel> ItemClicked;
 
-    private void OnEnable()
-    {
-        EnsureInitialized();
+        [Header("References")] 
+        [SerializeField] private MenuScreenConfigAsset _configAsset;
+        [SerializeField] private ScrollRect _scrollRect;
+        [SerializeField] private RectTransform _viewport;
+        [SerializeField] private RectTransform _content;
+        [SerializeField] private GridLayoutGroup _gridLayoutGroup;
+        [SerializeField] private GalleryItemView _itemPrefab;
 
-        if (_scrollRect != null)
+        private readonly GridVisibleRangeCalculator _visibleRangeCalculator = new GridVisibleRangeCalculator();
+        private readonly GalleryItemViewsCollection _itemViewsCollection = new GalleryItemViewsCollection();
+        private readonly GalleryItemViewPool _itemViewPool = new GalleryItemViewPool();
+
+        private TextureCache _textureCache;
+        private RemoteTextureLoader _remoteTextureLoader;
+
+        private GalleryGridLayoutApplier _gridLayoutApplier;
+        private GalleryLazyLoadRangeUpdater _lazyLoadRangeUpdater;
+
+        private void Awake()
         {
-            _scrollRect.onValueChanged.AddListener(OnScrollValueChanged);
+            EnsureInitialized();
+            _gridLayoutApplier?.Apply();
         }
 
-        _lazyLoadRangeUpdater.ForceUpdate();
-    }
-
-    private void OnDisable()
-    {
-        if (_scrollRect != null)
+        private void OnEnable()
         {
-            _scrollRect.onValueChanged.RemoveListener(OnScrollValueChanged);
+            EnsureInitialized();
+
+            _scrollRect?.onValueChanged.AddListener(OnScrollValueChanged);
+            _lazyLoadRangeUpdater?.ForceUpdate();
         }
 
-        if (_lazyLoadRangeUpdater != null)
+        private void OnDisable()
         {
-            _lazyLoadRangeUpdater.Reset();
+            _scrollRect?.onValueChanged.RemoveListener(OnScrollValueChanged);
+            _lazyLoadRangeUpdater?.Reset();
         }
-    }
 
-    Coroutine ICoroutineRunner.RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
+        Coroutine ICoroutineRunner.RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
 
-    void ICoroutineRunner.StopRunning(Coroutine coroutine)
-    {
-        if (coroutine != null)
+        void ICoroutineRunner.StopRunning(Coroutine coroutine)
         {
+            if (coroutine == null)
+                return;
+            
             StopCoroutine(coroutine);
         }
-    }
 
-    public GalleryItemView TryGetItemView(GalleryImageModel model)
-    {
-        if (model.Id < 0)
+        public GalleryItemView TryGetItemView(GalleryImageModel model)
         {
-            return null;
+            if (model.Id < 0)
+                return null;
+
+            return _itemViewsCollection.TryGetById(model.Id);
         }
 
-        return _itemViewsCollection.TryGetById(model.Id);
-    }
-
-    public void TrySetItems(IReadOnlyList<GalleryImageModel> items)
-    {
-        EnsureInitialized();
-
-        _itemViewsCollection.Clear(UnsubscribeFromItemView, ReleaseItemViewToPool);
-        _itemViewsCollection.Rebuild(items, CreateItemViewByIndex, SubscribeToItemView, BindItemView);
-
-        _gridLayoutApplier.Apply();
-        _lazyLoadRangeUpdater.ForceUpdate();
-    }
-    
-    private GalleryItemView CreateItemViewByIndex(int index)
-    {
-        if (_itemPrefab == null || _content == null)
+        public void TrySetItems(IReadOnlyList<GalleryImageModel> items)
         {
-            return null;
+            EnsureInitialized();
+
+            _itemViewsCollection.Clear(UnsubscribeFromItemView, ReleaseItemViewToPool);
+            _itemViewsCollection.Rebuild(items, CreateItemViewByIndex, SubscribeToItemView, BindItemView);
+
+            _gridLayoutApplier.Apply();
+            _lazyLoadRangeUpdater.ForceUpdate();
         }
 
-        GalleryItemView itemView = _itemViewPool.Acquire(_itemPrefab, _content);
-
-        if (itemView == null)
+        private GalleryItemView CreateItemViewByIndex(int index)
         {
-            return null;
-        }
-        
-        itemView.transform.SetSiblingIndex(index);
+            if (_itemPrefab == null || _content == null)
+                return null;
 
-        return itemView;
-    }
-    
-    private int GetSpawnedCount() => _itemViewsCollection.Count;
+            GalleryItemView itemView = _itemViewPool.Acquire(_itemPrefab, _content);
 
-    private void EnsureInitialized()
-    {
-        EnsureRemoteLoadingInitialized();
+            if (itemView == null)
+                return null;
 
-        if (_gridLayoutApplier == null)
-        {
-            _gridLayoutApplier = new GalleryGridLayoutApplier(_configAsset, _viewport, _content, _gridLayoutGroup);
+            itemView.transform.SetSiblingIndex(index);
+
+            return itemView;
         }
 
-        if (_lazyLoadRangeUpdater == null)
-        {
-            _lazyLoadRangeUpdater = new GalleryLazyLoadRangeUpdater(_visibleRangeCalculator, _configAsset, _viewport,
-                _content, _gridLayoutGroup, GetSpawnedCount, SetItemLoadingEnabledByIndex);
-        }
-    }
+        private int GetSpawnedCount() => _itemViewsCollection.Count;
 
-    private void EnsureRemoteLoadingInitialized()
-    {
-        if (_remoteTextureLoader != null && _textureCache != null)
+        private void EnsureInitialized()
         {
-            return;
+            EnsureRemoteLoadingInitialized();
+
+            _gridLayoutApplier ??= new GalleryGridLayoutApplier(_configAsset, _viewport, _content, _gridLayoutGroup);
+            _lazyLoadRangeUpdater ??= new GalleryLazyLoadRangeUpdater(_visibleRangeCalculator, _configAsset,
+                _viewport, _content, _gridLayoutGroup, GetSpawnedCount, SetItemLoadingEnabledByIndex);
         }
 
-        if (_configAsset == null)
+        private void EnsureRemoteLoadingInitialized()
         {
-            return;
+            if (_configAsset == null)
+                return;
+
+            _textureCache ??= new TextureCache(_configAsset.TextureCacheCapacity);
+            _remoteTextureLoader ??= new RemoteTextureLoader(this, _textureCache, _configAsset.RequestTimeoutSeconds);
         }
 
-        _textureCache = new TextureCache(_configAsset.TextureCacheCapacity);
-        _remoteTextureLoader = new RemoteTextureLoader(this, _textureCache, _configAsset.RequestTimeoutSeconds);
-    }
-
-    private void OnRectTransformDimensionsChange()
-    {
-        if (_gridLayoutApplier == null || _lazyLoadRangeUpdater == null)
+        private void OnRectTransformDimensionsChange()
         {
-            return;
+            _gridLayoutApplier?.ApplyIfNeeded();
+            _lazyLoadRangeUpdater?.ForceUpdate();
         }
 
-        _gridLayoutApplier.ApplyIfNeeded();
-        _lazyLoadRangeUpdater.ForceUpdate();
-    }
-
-    private void OnScrollValueChanged(Vector2 scrollNormalizedPosition)
-    {
-        _lazyLoadRangeUpdater.UpdateIfNeeded();
-    }
-
-    private void OnItemClicked(GalleryImageModel model)
-    {
-        ItemClicked?.Invoke(model);
-    }
-
-    private void SetItemLoadingEnabledByIndex(int index, bool shouldLoad, bool cancelOutsideRange)
-    {
-        GalleryItemView itemView = _itemViewsCollection.TryGetByIndex(index);
-        
-        if (itemView == null)
+        private void OnScrollValueChanged(Vector2 scrollNormalizedPosition)
         {
-            return;
+            _lazyLoadRangeUpdater.UpdateIfNeeded();
         }
 
-        itemView.SetLoadingEnabled(shouldLoad, cancelOutsideRange);
-    }
-    
-    private void ReleaseItemViewToPool(GalleryItemView itemView)
-    {
-        if (itemView == null)
+        private void OnItemClicked(GalleryImageModel model)
         {
-            return;
+            ItemClicked?.Invoke(model);
         }
 
-        _itemViewPool.Release(itemView);
-    }
-    
-    private void BindItemView(GalleryItemView itemView, GalleryImageModel model)
-    {
-        if (itemView == null)
+        private void SetItemLoadingEnabledByIndex(int index, bool shouldLoad, bool cancelOutsideRange)
         {
-            return;
+            GalleryItemView itemView = _itemViewsCollection.TryGetByIndex(index);
+
+            if (itemView == null)
+                return;
+
+            itemView.SetLoadingEnabled(shouldLoad, cancelOutsideRange);
         }
 
-        itemView.TryBindModel(model, _remoteTextureLoader, this);
-    }
-
-    private void SubscribeToItemView(GalleryItemView itemView)
-    {
-        if (itemView == null)
+        private void ReleaseItemViewToPool(GalleryItemView itemView)
         {
-            return;
+            if (itemView == null)
+                return;
+
+            _itemViewPool.Release(itemView);
         }
 
-        itemView.Clicked += OnItemClicked;
-    }
-
-    private void UnsubscribeFromItemView(GalleryItemView itemView)
-    {
-        if (itemView == null)
+        private void BindItemView(GalleryItemView itemView, GalleryImageModel model)
         {
-            return;
+            if (itemView == null)
+                return;
+
+            itemView.TryBindModel(model, _remoteTextureLoader, this);
         }
 
-        itemView.Clicked -= OnItemClicked;
+        private void SubscribeToItemView(GalleryItemView itemView)
+        {
+            if (itemView == null)
+                return;
+
+            itemView.Clicked += OnItemClicked;
+        }
+
+        private void UnsubscribeFromItemView(GalleryItemView itemView)
+        {
+            if (itemView == null)
+                return;
+
+            itemView.Clicked -= OnItemClicked;
+        }
     }
 }

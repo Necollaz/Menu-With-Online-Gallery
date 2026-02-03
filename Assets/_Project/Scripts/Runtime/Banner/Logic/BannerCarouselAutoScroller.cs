@@ -2,66 +2,66 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public sealed class BannerCarouselAutoScroller
+namespace MenuWithOnlineGallery.BannerCarousel
 {
-    private readonly MonoBehaviour _coroutineOwner;
-    private readonly BannerCarouselState _state;
-    
-    private readonly Action<int> _scrollToIndex;
-
-    private Coroutine _autoScrollCoroutine;
-
-    public BannerCarouselAutoScroller(MonoBehaviour coroutineOwner, BannerCarouselState state,
-        Action<int> scrollToIndex)
+    public sealed class BannerCarouselAutoScroller
     {
-        _coroutineOwner = coroutineOwner;
-        _state = state;
-        _scrollToIndex = scrollToIndex;
-    }
-
-    public void Start()
-    {
-        if (_coroutineOwner == null || _state == null || _scrollToIndex == null)
-        {
-            return;
-        }
-
-        Stop();
+        private readonly MonoBehaviour _coroutineOwner;
+        private readonly BannerCarouselState _state;
         
-        _autoScrollCoroutine = _coroutineOwner.StartCoroutine(AutoScrollLoop());
-    }
-
-    public void Stop()
-    {
-        if (_coroutineOwner == null)
+        private readonly Action<int> _scrollToIndex;
+    
+        private Coroutine _autoScrollCoroutine;
+    
+        public BannerCarouselAutoScroller(
+            MonoBehaviour coroutineOwner,
+            BannerCarouselState state,
+            Action<int> scrollToIndex)
         {
-            _autoScrollCoroutine = null;
-            return;
+            _coroutineOwner = coroutineOwner;
+            _state = state;
+            _scrollToIndex = scrollToIndex;
         }
-
-        if (_autoScrollCoroutine == null)
+    
+        public void Start()
         {
-            return;
+            if (_coroutineOwner == null || _state == null || _scrollToIndex == null)
+                return;
+    
+            Stop();
+            
+            _autoScrollCoroutine = _coroutineOwner.StartCoroutine(AutoScrollLoop());
         }
-
-        _coroutineOwner.StopCoroutine(_autoScrollCoroutine);
-        _autoScrollCoroutine = null;
-    }
-
-    private IEnumerator AutoScrollLoop()
-    {
-        while (true)
+    
+        public void Stop()
         {
-            yield return null;
-
-            if (!_state.CanAutoScroll(Time.unscaledTime))
+            if (_coroutineOwner == null)
             {
-                continue;
+                _autoScrollCoroutine = null;
+                
+                return;
             }
-
-            int nextIndex = _state.GetNextAutoIndex();
-            _scrollToIndex.Invoke(nextIndex);
-            _state.ScheduleNextAutoScroll(Time.unscaledTime);
+    
+            if (_autoScrollCoroutine == null)
+                return;
+    
+            _coroutineOwner.StopCoroutine(_autoScrollCoroutine);
+            _autoScrollCoroutine = null;
+        }
+    
+        private IEnumerator AutoScrollLoop()
+        {
+            while (true)
+            {
+                yield return null;
+    
+                if (!_state.CanAutoScroll(Time.unscaledTime))
+                    continue;
+    
+                int nextIndex = _state.GetNextAutoIndex();
+                _scrollToIndex.Invoke(nextIndex);
+                _state.ScheduleNextAutoScroll(Time.unscaledTime);
+            }
         }
     }
 }

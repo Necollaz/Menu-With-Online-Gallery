@@ -1,35 +1,36 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class BannerCarouselReferences
+namespace MenuWithOnlineGallery.BannerCarousel
 {
-    private readonly MonoBehaviour _owner;
-
-    private ScrollRect _scrollRect;
-    private RectTransform _viewportRectTransform;
-
-    public BannerCarouselReferences(MonoBehaviour owner, ref ScrollRect scrollRect, ref RectTransform viewportRectTransform)
+    public sealed class BannerCarouselReferences
     {
-        _owner = owner;
-        _scrollRect = scrollRect;
-        _viewportRectTransform = viewportRectTransform;
-    }
-    
-    public RectTransform ContentRectTransform { get; private set; }
-    public RectTransform ViewportRectTransform => _viewportRectTransform;
+        private readonly MonoBehaviour _owner;
 
-    public void TryBind()
-    {
-        if (_scrollRect == null)
+        private ScrollRect _scrollRect;
+        private RectTransform _viewportRectTransform;
+
+        public BannerCarouselReferences(
+            MonoBehaviour owner,
+            ref ScrollRect scrollRect,
+            ref RectTransform viewportRectTransform)
         {
-            _scrollRect = _owner.GetComponent<ScrollRect>();
+            _owner = owner;
+            _scrollRect = scrollRect;
+            _viewportRectTransform = viewportRectTransform;
         }
+    
+        public RectTransform ContentRectTransform { get; private set; }
+        public RectTransform ViewportRectTransform => _viewportRectTransform;
 
-        ContentRectTransform = _scrollRect != null ? _scrollRect.content : null;
-
-        if (_viewportRectTransform == null && _scrollRect != null)
+        public void TryBind()
         {
-            _viewportRectTransform = _scrollRect.viewport;
+            _scrollRect ??= _owner.GetComponent<ScrollRect>();
+
+            ContentRectTransform = _scrollRect != null ? _scrollRect.content : null;
+
+            if (_viewportRectTransform == null && _scrollRect != null)
+                _viewportRectTransform = _scrollRect.viewport;
         }
     }
 }

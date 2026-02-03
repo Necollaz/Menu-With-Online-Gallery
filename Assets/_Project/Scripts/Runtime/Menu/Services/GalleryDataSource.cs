@@ -1,31 +1,34 @@
 using System.Collections.Generic;
 
-public sealed class GalleryDataSource
+namespace MenuWithOnlineGallery.Gallery
 {
-    private readonly GalleryConfig _config;
-
-    public GalleryDataSource(GalleryConfig config)
+    public sealed class GalleryDataSource
     {
-        _config = config;
-    }
+        private readonly GalleryConfig _config;
 
-    public IReadOnlyList<GalleryImageModel> CreateAll()
-    {
-        var items = new List<GalleryImageModel>(_config.ImagesCount);
-
-        for (int id = 1; id <= _config.ImagesCount; id++)
+        public GalleryDataSource(GalleryConfig config)
         {
-            items.Add(CreateModel(id));
+            _config = config;
         }
 
-        return items;
-    }
+        public IReadOnlyList<GalleryImageModel> CreateAll()
+        {
+            var items = new List<GalleryImageModel>(_config.ImagesCount);
 
-    private GalleryImageModel CreateModel(int id)
-    {
-        string url = $"{_config.BaseUrl}{id}.jpg";
-        bool isPremium = id % _config.PremiumEvery == 0;
+            for (int id = 1; id <= _config.ImagesCount; id++)
+            {
+                items.Add(CreateModel(id));
+            }
 
-        return new GalleryImageModel(id, url, isPremium);
+            return items;
+        }
+
+        private GalleryImageModel CreateModel(int id)
+        {
+            string url = $"{_config.BaseUrl}{id}.jpg";
+            bool isPremium = id % _config.PremiumEvery == 0;
+
+            return new GalleryImageModel(id, url, isPremium);
+        }
     }
 }

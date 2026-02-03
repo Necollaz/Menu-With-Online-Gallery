@@ -1,13 +1,16 @@
-public sealed class GalleryConfig
+namespace MenuWithOnlineGallery.Gallery
 {
-    public GalleryConfig(string baseUrl, int imagesCount, int premiumEvery)
+    public sealed class GalleryConfig
     {
-        BaseUrl = baseUrl;
-        ImagesCount = imagesCount;
-        PremiumEvery = premiumEvery;
-    }
+        public GalleryConfig(string baseUrl, int imagesCount, int premiumEvery)
+        {
+            BaseUrl = baseUrl;
+            ImagesCount = imagesCount;
+            PremiumEvery = premiumEvery;
+        }
     
-    public string BaseUrl { get; }
-    public int ImagesCount { get; }
-    public int PremiumEvery { get; }
+        public string BaseUrl { get; }
+        public int ImagesCount { get; }
+        public int PremiumEvery { get; }
+    }
 }

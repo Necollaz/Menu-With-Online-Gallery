@@ -1,109 +1,98 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class DotsIndicator
+namespace MenuWithOnlineGallery.BannerCarousel.Dots
 {
-    private const int FIRST_INDEX = 0;
-
-    private readonly RectTransform _container;
-    private readonly DotView _dotPrefab;
-
-    private readonly List<DotView> _dots = new List<DotView>();
-
-    public DotsIndicator(RectTransform container, DotView dotPrefab)
+    public sealed class DotsIndicator
     {
-        _container = container;
-        _dotPrefab = dotPrefab;
-    }
+        private const int FIRST_INDEX = 0;
 
-    public void Rebuild(int count)
-    {
-        if (_container == null || _dotPrefab == null)
+        private readonly RectTransform _container;
+        private readonly DotView _dotPrefab;
+
+        private readonly List<DotView> _dots = new List<DotView>();
+
+        public DotsIndicator(RectTransform container, DotView dotPrefab)
         {
-            return;
+            _container = container;
+            _dotPrefab = dotPrefab;
         }
 
-        int requiredCount = Mathf.Max(0, count);
-
-        EnsureDotsCount(requiredCount);
-        SetDotsVisibleCount(requiredCount);
-        SetActiveIndex(FIRST_INDEX);
-    }
-    
-    public void SetActiveIndex(int activeIndex)
-    {
-        if (_dots.Count == 0)
+        public void Rebuild(int count)
         {
-            return;
+            if (_container == null || _dotPrefab == null)
+                return;
+
+            int requiredCount = Mathf.Max(0, count);
+
+            EnsureDotsCount(requiredCount);
+            SetDotsVisibleCount(requiredCount);
+            SetActiveIndex(FIRST_INDEX);
         }
 
-        activeIndex = Mathf.Clamp(activeIndex, 0, _dots.Count - 1);
-
-        for (int i = 0; i < _dots.Count; i++)
+        public void SetActiveIndex(int activeIndex)
         {
-            DotView dotView = _dots[i];
-            
-            if (dotView == null || !dotView.gameObject.activeSelf)
+            if (_dots.Count == 0)
+                return;
+
+            activeIndex = Mathf.Clamp(activeIndex, 0, _dots.Count - 1);
+
+            for (int i = 0; i < _dots.Count; i++)
             {
-                continue;
-            }
+                DotView dotView = _dots[i];
 
-            dotView.SetActive(i == activeIndex);
-        }
-    }
+                if (dotView == null || !dotView.gameObject.activeSelf)
+                    continue;
 
-    public void Dispose()
-    {
-        DestroyAllDots();
-    }
-
-    private void EnsureDotsCount(int requiredCount)
-    {
-        for (int i = _dots.Count; i < requiredCount; i++)
-        {
-            DotView dot = Object.Instantiate(_dotPrefab, _container);
-            dot.SetActive(false);
-            _dots.Add(dot);
-        }
-    }
-
-    private void SetDotsVisibleCount(int visibleCount)
-    {
-        for (int i = 0; i < _dots.Count; i++)
-        {
-            DotView dotView = _dots[i];
-            
-            if (dotView == null)
-            {
-                continue;
-            }
-
-            bool shouldBeVisible = i < visibleCount;
-            
-            if (dotView.gameObject.activeSelf != shouldBeVisible)
-            {
-                dotView.gameObject.SetActive(shouldBeVisible);
-            }
-
-            if (shouldBeVisible)
-            {
-                dotView.SetActive(false);
-            }
-        }
-    }
-
-    private void DestroyAllDots()
-    {
-        for (int i = 0; i < _dots.Count; i++)
-        {
-            DotView dotView = _dots[i];
-            
-            if (dotView != null)
-            {
-                Object.Destroy(dotView.gameObject);
+                dotView.SetActive(i == activeIndex);
             }
         }
 
-        _dots.Clear();
+        public void Dispose()
+        {
+            DestroyAllDots();
+        }
+
+        private void EnsureDotsCount(int requiredCount)
+        {
+            for (int i = _dots.Count; i < requiredCount; i++)
+            {
+                DotView dot = Object.Instantiate(_dotPrefab, _container);
+                dot.SetActive(false);
+                _dots.Add(dot);
+            }
+        }
+
+        private void SetDotsVisibleCount(int visibleCount)
+        {
+            for (int i = 0; i < _dots.Count; i++)
+            {
+                DotView dotView = _dots[i];
+
+                if (dotView == null)
+                    continue;
+
+                bool shouldBeVisible = i < visibleCount;
+
+                if (dotView.gameObject.activeSelf != shouldBeVisible)
+                    dotView.gameObject.SetActive(shouldBeVisible);
+
+                if (shouldBeVisible)
+                    dotView.SetActive(false);
+            }
+        }
+
+        private void DestroyAllDots()
+        {
+            for (int i = 0; i < _dots.Count; i++)
+            {
+                DotView dotView = _dots[i];
+
+                if (dotView != null)
+                    Object.Destroy(dotView.gameObject);
+            }
+
+            _dots.Clear();
+        }
     }
 }

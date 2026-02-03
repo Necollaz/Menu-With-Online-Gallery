@@ -1,13 +1,16 @@
-public readonly struct GalleryImageModel
+namespace MenuWithOnlineGallery.Gallery
 {
-    public GalleryImageModel(int id, string url, bool isPremium)
+    public readonly struct GalleryImageModel
     {
-        Id = id;
-        Url = url;
-        IsPremium = isPremium;
-    }
+        public GalleryImageModel(int id, string url, bool isPremium)
+        {
+            Id = id;
+            Url = url;
+            IsPremium = isPremium;
+        }
     
-    public int Id { get; }
-    public string Url { get; }
-    public bool IsPremium { get; }
+        public int Id { get; }
+        public string Url { get; }
+        public bool IsPremium { get; }
+    }
 }

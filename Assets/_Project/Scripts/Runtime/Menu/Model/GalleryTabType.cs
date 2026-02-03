@@ -1,6 +1,9 @@
-public enum GalleryTabType
+namespace MenuWithOnlineGallery.Gallery
 {
-    All = 0,
-    Odd = 1,
-    Even = 2,
+    public enum GalleryTabType
+    {
+        All = 0,
+        Odd = 1,
+        Even = 2,
+    }
 }

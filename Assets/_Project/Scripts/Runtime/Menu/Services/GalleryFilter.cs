@@ -1,37 +1,35 @@
 using System.Collections.Generic;
 
-public sealed class GalleryFilter
+namespace MenuWithOnlineGallery.Gallery
 {
-    public IReadOnlyList<GalleryImageModel> TryApply(GalleryTabType tabType, IReadOnlyList<GalleryImageModel> allItems)
+    public sealed class GalleryFilter
     {
-        if (allItems == null || allItems.Count == 0)
+        public IReadOnlyList<GalleryImageModel> TryApply(GalleryTabType tabType, IReadOnlyList<GalleryImageModel> allItems)
         {
-            return allItems;
-        }
+            if (allItems == null || allItems.Count == 0)
+                return allItems;
 
-        if (tabType == GalleryTabType.All)
-        {
-            return allItems;
-        }
+            if (tabType == GalleryTabType.All)
+                return allItems;
 
-        var result = new List<GalleryImageModel>(allItems.Count);
+            var result = new List<GalleryImageModel>(allItems.Count);
 
-        for (int i = 0; i < allItems.Count; i++)
-        {
-            GalleryImageModel item = allItems[i];
-
-            if (tabType == GalleryTabType.Odd && (item.Id & 1) == 1)
+            for (int i = 0; i < allItems.Count; i++)
             {
-                result.Add(item);
-                continue;
+                GalleryImageModel item = allItems[i];
+
+                if (tabType == GalleryTabType.Odd && (item.Id & 1) == 1)
+                {
+                    result.Add(item);
+                    
+                    continue;
+                }
+
+                if (tabType == GalleryTabType.Even && (item.Id & 1) == 0)
+                    result.Add(item);
             }
 
-            if (tabType == GalleryTabType.Even && (item.Id & 1) == 0)
-            {
-                result.Add(item);
-            }
+            return result;
         }
-
-        return result;
     }
 }

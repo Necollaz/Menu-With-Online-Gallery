@@ -1,21 +1,17 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class DotView : MonoBehaviour
+namespace MenuWithOnlineGallery.BannerCarousel.Dots
 {
-    [SerializeField] private Image _activeImage;
-    [SerializeField] private Image _inactiveImage;
-
-    public void SetActive(bool isActive)
+    public sealed class DotView : MonoBehaviour
     {
-        if (_activeImage != null)
-        {
-            _activeImage.gameObject.SetActive(isActive);
-        }
+        [SerializeField] private Image _activeImage;
+        [SerializeField] private Image _inactiveImage;
 
-        if (_inactiveImage != null)
+        public void SetActive(bool isActive)
         {
-            _inactiveImage.gameObject.SetActive(!isActive);
+            _activeImage?.gameObject.SetActive(isActive);
+            _inactiveImage?.gameObject.SetActive(!isActive);
         }
     }
 }

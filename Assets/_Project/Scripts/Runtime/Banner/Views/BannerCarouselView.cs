@@ -1,175 +1,164 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using MenuWithOnlineGallery.BannerCarousel.Dots;
 
-[RequireComponent(typeof(ScrollRect))]
-public sealed class BannerCarouselView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler
+namespace MenuWithOnlineGallery.BannerCarousel
 {
-    [Header("Dots")]
-    [SerializeField] private RectTransform _dotsContainer;
-    [SerializeField] private DotView _dotPrefab;
-    
-    [Header("References")] 
-    [SerializeField] private ScrollRect _scrollRect;
-    [SerializeField] private RectTransform _viewportRectTransform;
-
-    [Header("Settings")] 
-    [SerializeField] private float _autoScrollIntervalSeconds = 5f;
-    [SerializeField] private float _snapDurationSeconds = 0.25f;
-    [SerializeField] private float _autoScrollResumeDelaySeconds = 1.0f;
-
-    private readonly BannerCarouselState _state = new BannerCarouselState();
-    
-    private BannerCarouselReferences _references;
-    private BannerSlidesResizer _slidesResizer;
-    private BannerCarouselSnapper _snapper;
-    private BannerCarouselAutoScroller _autoScroller;
-    
-    private DotsIndicator _dotsIndicator;
-    
-    private void Awake()
+    [RequireComponent(typeof(ScrollRect))]
+    public sealed class BannerCarouselView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
+        IPointerDownHandler
     {
-        EnsureInitialized();
-
-        _state.ResetIndex();
+        [Header("Dots")]
+        [SerializeField] private RectTransform _dotsContainer;
+        [SerializeField] private DotView _dotPrefab;
         
-        SetNormalizedPosition(_state.GetNormalizedPositionForIndex(_state.CurrentIndex));
+        [Header("References")]
+        [SerializeField] private ScrollRect _scrollRect;
+        [SerializeField] private RectTransform _viewportRectTransform;
 
-        _dotsIndicator = new DotsIndicator(_dotsContainer, _dotPrefab);
-        _dotsIndicator.Rebuild(_state.SlidesCount);
-        _dotsIndicator.SetActiveIndex(_state.CurrentIndex);
-        
-        _state.ScheduleNextAutoScroll(Time.unscaledTime);
-    }
+        [Header("Settings")]
+        [SerializeField] private float _autoScrollIntervalSeconds = 5f;
+        [SerializeField] private float _snapDurationSeconds = 0.25f;
+        [SerializeField] private float _autoScrollResumeDelaySeconds = 1.0f;
 
-    private void OnEnable()
-    {
-        EnsureInitialized();
-        RefreshSlidesCount();
-        
-        _slidesResizer.ResizeToViewport();
-        _autoScroller.Start();
-    }
+        private readonly BannerCarouselState _state = new BannerCarouselState();
 
-    private void OnDisable()
-    {
-        _autoScroller?.Stop();
-        _snapper?.Stop();
-    }
+        private BannerCarouselReferences _references;
+        private BannerSlidesResizer _slidesResizer;
+        private BannerCarouselSnapper _snapper;
+        private BannerCarouselAutoScroller _autoScroller;
 
-    private void OnDestroy()
-    {
-        if (_dotsIndicator != null)
+        private DotsIndicator _dotsIndicator;
+
+        private void Awake()
         {
+            EnsureInitialized();
+
+            _state.ResetIndex();
+
+            SetNormalizedPosition(_state.GetNormalizedPositionForIndex(_state.CurrentIndex));
+
+            _dotsIndicator = new DotsIndicator(_dotsContainer, _dotPrefab);
+            _dotsIndicator.Rebuild(_state.SlidesCount);
+            _dotsIndicator.SetActiveIndex(_state.CurrentIndex);
+
+            _state.ScheduleNextAutoScroll(Time.unscaledTime);
+        }
+
+        private void OnEnable()
+        {
+            EnsureInitialized();
+            RefreshSlidesCount();
+
+            _slidesResizer.ResizeToViewport();
+            _autoScroller.Start();
+        }
+
+        private void OnDisable()
+        {
+            _autoScroller?.Stop();
+            _snapper?.Stop();
+        }
+
+        private void OnDestroy()
+        {
+            if (_dotsIndicator == null)
+                return;
+
             _dotsIndicator.Dispose();
             _dotsIndicator = null;
         }
-    }
 
-    void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
-    {
-        _state.DelayAutoScroll(Time.unscaledTime);
-    }
-
-    void IBeginDragHandler.OnBeginDrag(PointerEventData eventData)
-    {
-        EnsureInitialized();
-
-        _state.BeginDrag(_scrollRect.horizontalNormalizedPosition);
-        _snapper.Stop();
-    }
-
-    void IDragHandler.OnDrag(PointerEventData eventData)
-    {
-        _state.DelayAutoScroll(Time.unscaledTime);
-    }
-
-    void IEndDragHandler.OnEndDrag(PointerEventData eventData)
-    {
-        _state.EndDrag();
-
-        float endNormalized = _scrollRect.horizontalNormalizedPosition;
-        int targetIndex = _state.ResolveTargetIndexAfterDrag(endNormalized);
-
-        ScrollToIndex(targetIndex);
-        
-        _state.DelayAutoScroll(Time.unscaledTime);
-    }
-
-    private void OnRectTransformDimensionsChange()
-    {
-        _slidesResizer?.ResizeToViewport();
-    }
-
-    private void EnsureInitialized()
-    {
-        if (_references == null)
+        void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
         {
-            _references = new BannerCarouselReferences(this, ref _scrollRect, ref _viewportRectTransform);
+            _state.DelayAutoScroll(Time.unscaledTime);
         }
 
-        _references.TryBind();
-
-        if (_slidesResizer == null)
+        void IBeginDragHandler.OnBeginDrag(PointerEventData eventData)
         {
-            _slidesResizer = new BannerSlidesResizer(_references);
+            EnsureInitialized();
+
+            _state.BeginDrag(_scrollRect.horizontalNormalizedPosition);
+            _snapper.Stop();
         }
 
-        ConfigureState();
-        RefreshSlidesCount();
-        
-        _slidesResizer.ResizeToViewport();
-
-        if (_snapper == null)
+        void IDragHandler.OnDrag(PointerEventData eventData)
         {
-            _snapper = new BannerCarouselSnapper(this, _scrollRect, _snapDurationSeconds);
+            _state.DelayAutoScroll(Time.unscaledTime);
         }
 
-        if (_autoScroller == null)
+        void IEndDragHandler.OnEndDrag(PointerEventData eventData)
         {
-            _autoScroller = new BannerCarouselAutoScroller(this, _state, ScrollToIndex);
-        }
-    }
+            _state.EndDrag();
 
-    private void ConfigureState()
-    {
-        _state.Configure(_autoScrollIntervalSeconds, _autoScrollResumeDelaySeconds);
-    }
+            float endNormalized = _scrollRect.horizontalNormalizedPosition;
+            int targetIndex = _state.ResolveTargetIndexAfterDrag(endNormalized);
 
-    private void RefreshSlidesCount()
-    {
-        int slidesCount = _references.ContentRectTransform != null ? _references.ContentRectTransform.childCount : 0;
-        _state.SetSlidesCount(slidesCount);
+            ScrollToIndex(targetIndex);
 
-        if (_dotsIndicator != null)
-        {
-            _dotsIndicator.Rebuild(_state.SlidesCount);
-            _dotsIndicator.SetActiveIndex(_state.CurrentIndex);
-        }
-    }
-
-    private void ScrollToIndex(int index)
-    {
-        _state.SetCurrentIndex(index);
-
-        if (_dotsIndicator != null)
-        {
-            _dotsIndicator.SetActiveIndex(_state.CurrentIndex);
+            _state.DelayAutoScroll(Time.unscaledTime);
         }
 
-        float targetNormalized = _state.GetNormalizedPositionForIndex(_state.CurrentIndex);
-        
-        _snapper.Stop();
-        _snapper.SnapTo(targetNormalized);
-    }
-
-    private void SetNormalizedPosition(float normalized)
-    {
-        if (_scrollRect == null)
+        private void OnRectTransformDimensionsChange()
         {
-            return;
+            _slidesResizer?.ResizeToViewport();
         }
 
-        _scrollRect.horizontalNormalizedPosition = normalized;
+        private void EnsureInitialized()
+        {
+            _references ??= new BannerCarouselReferences(this, ref _scrollRect, ref _viewportRectTransform);
+
+            _references.TryBind();
+
+            _slidesResizer ??= new BannerSlidesResizer(_references);
+
+            ConfigureState();
+            RefreshSlidesCount();
+
+            _slidesResizer.ResizeToViewport();
+
+            _snapper ??= new BannerCarouselSnapper(this, _scrollRect, _snapDurationSeconds);
+            _autoScroller ??= new BannerCarouselAutoScroller(this, _state, ScrollToIndex);
+        }
+
+        private void ConfigureState()
+        {
+            _state.Configure(_autoScrollIntervalSeconds, _autoScrollResumeDelaySeconds);
+        }
+
+        private void RefreshSlidesCount()
+        {
+            if (_references.ContentRectTransform == null)
+            {
+                _state.SetSlidesCount(0);
+                _dotsIndicator?.Rebuild(0);
+                
+                return;
+            }
+            
+            _state.SetSlidesCount(_references.ContentRectTransform.childCount);
+            _dotsIndicator?.Rebuild(_state.SlidesCount);
+            _dotsIndicator?.SetActiveIndex(_state.CurrentIndex);
+        }
+
+        private void ScrollToIndex(int index)
+        {
+            _state.SetCurrentIndex(index);
+            _dotsIndicator?.SetActiveIndex(_state.CurrentIndex);
+
+            float targetNormalized = _state.GetNormalizedPositionForIndex(_state.CurrentIndex);
+
+            _snapper.Stop();
+            _snapper.SnapTo(targetNormalized);
+        }
+
+        private void SetNormalizedPosition(float normalized)
+        {
+            if (_scrollRect == null)
+                return;
+
+            _scrollRect.horizontalNormalizedPosition = normalized;
+        }
     }
 }

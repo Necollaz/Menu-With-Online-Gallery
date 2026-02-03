@@ -1,40 +1,38 @@
 using UnityEngine;
+using MenuWithOnlineGallery.Common;
 
-public readonly struct RemoteTextureLoadHandle
+namespace MenuWithOnlineGallery.RemoteImages
 {
-    public static RemoteTextureLoadHandle Empty => new RemoteTextureLoadHandle(string.Empty, null, null);
-
-    private readonly string _url;
-    private readonly Coroutine _coroutine;
-    private readonly TextureCache _textureCache;
-
-    public RemoteTextureLoadHandle(string url, Coroutine coroutine, TextureCache textureCache)
+    public readonly struct RemoteTextureLoadHandle
     {
-        _url = url;
-        _coroutine = coroutine;
-        _textureCache = textureCache;
-    }
+        public static RemoteTextureLoadHandle Empty => new RemoteTextureLoadHandle(string.Empty, null, null);
+
+        private readonly string _url;
+        private readonly Coroutine _coroutine;
+        private readonly TextureCache _textureCache;
+
+        public RemoteTextureLoadHandle(string url, Coroutine coroutine, TextureCache textureCache)
+        {
+            _url = url;
+            _coroutine = coroutine;
+            _textureCache = textureCache;
+        }
     
-    public bool IsEmpty => string.IsNullOrEmpty(_url) && _coroutine == null && _textureCache == null;
+        public bool IsEmpty => string.IsNullOrEmpty(_url) && _coroutine == null && _textureCache == null;
 
-    public void Cancel(ICoroutineRunner coroutineRunner)
-    {
-        if (_coroutine != null && coroutineRunner != null)
+        public void Cancel(ICoroutineRunner coroutineRunner)
         {
-            coroutineRunner.StopRunning(_coroutine);
+            if (_coroutine != null && coroutineRunner != null)
+                coroutineRunner.StopRunning(_coroutine);
+
+            if (!string.IsNullOrEmpty(_url) && _textureCache != null)
+                _textureCache.Release(_url);
         }
 
-        if (!string.IsNullOrEmpty(_url) && _textureCache != null)
+        public void ReleaseOnly()
         {
-            _textureCache.Release(_url);
-        }
-    }
-
-    public void ReleaseOnly()
-    {
-        if (!string.IsNullOrEmpty(_url) && _textureCache != null)
-        {
-            _textureCache.Release(_url);
+            if (!string.IsNullOrEmpty(_url) && _textureCache != null)
+                _textureCache.Release(_url);
         }
     }
 }

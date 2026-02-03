@@ -1,34 +1,39 @@
 using UnityEngine;
+using MenuWithOnlineGallery.Gallery;
+using MenuWithOnlineGallery.Popups;
 
-public sealed class MenuScreenBootstrapper : MonoBehaviour
+namespace MenuWithOnlineGallery.MenuScreen
 {
-    [SerializeField] private MenuScreenConfigAsset _configAsset;
-    [SerializeField] private TabBarView _tabBarView;
-    [SerializeField] private GalleryView _galleryView;
+    public sealed class MenuScreenBootstrapper : MonoBehaviour
+    {
+        [SerializeField] private MenuScreenConfigAsset _configAsset;
+        [SerializeField] private TabBarView _tabBarView;
+        [SerializeField] private GalleryView _galleryView;
     
-    [Header("Popups")]
-    [SerializeField] private ImagePopupView _imagePopupView;
-    [SerializeField] private PremiumPopupView _premiumPopupView;
+        [Header("Popups")]
+        [SerializeField] private ImagePopupView _imagePopupView;
+        [SerializeField] private PremiumPopupView _premiumPopupView;
     
-    private MenuScreenPresenter _presenter;
+        private MenuScreenPresenter _presenter;
 
-    private void Awake()
-    {
-        GalleryConfig galleryConfig = new GalleryConfig(_configAsset.BaseUrl, _configAsset.ImagesCount, 
-            _configAsset.PremiumEvery);
-        GalleryDataSource dataSource = new GalleryDataSource(galleryConfig);
-        GalleryFilter filter = new GalleryFilter();
-        _presenter = new MenuScreenPresenter(_tabBarView, _galleryView, dataSource, filter, _imagePopupView,
-            _premiumPopupView);
-    }
+        private void Awake()
+        {
+            GalleryConfig galleryConfig = new GalleryConfig(_configAsset.BaseUrl, _configAsset.ImagesCount, 
+                _configAsset.PremiumEvery);
+            GalleryDataSource dataSource = new GalleryDataSource(galleryConfig);
+            GalleryFilter filter = new GalleryFilter();
+            _presenter = new MenuScreenPresenter(_tabBarView, _galleryView, dataSource, filter, _imagePopupView,
+                _premiumPopupView);
+        }
 
-    private void OnEnable()
-    {
-        _presenter.Initialize();
-    }
+        private void OnEnable()
+        {
+            _presenter.Initialize();
+        }
 
-    private void OnDisable()
-    {
-        _presenter.Dispose();
+        private void OnDisable()
+        {
+            _presenter.Dispose();
+        }
     }
 }

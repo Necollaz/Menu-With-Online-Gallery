@@ -1,46 +1,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class GalleryItemViewPool
+namespace MenuWithOnlineGallery.Gallery
 {
-    private readonly Stack<GalleryItemView> _pool = new Stack<GalleryItemView>();
-
-    public GalleryItemView Acquire(GalleryItemView prefab, RectTransform parent)
+    public sealed class GalleryItemViewPool
     {
-        if (prefab == null || parent == null)
-        {
-            return null;
-        }
+        private readonly Stack<GalleryItemView> _pool = new Stack<GalleryItemView>();
 
-        GalleryItemView itemView;
-
-        if (_pool.Count > 0)
+        public GalleryItemView Acquire(GalleryItemView prefab, RectTransform parent)
         {
-            itemView = _pool.Pop();
-            
-            if (itemView == null)
+            if (prefab == null || parent == null)
+                return null;
+
+            GalleryItemView itemView;
+
+            if (_pool.Count > 0)
             {
-                return Object.Instantiate(prefab, parent);
+                itemView = _pool.Pop();
+            
+                if (itemView == null)
+                    return Object.Instantiate(prefab, parent);
+
+                Transform viewTransform = itemView.transform;
+                viewTransform.SetParent(parent, false);
+                itemView.gameObject.SetActive(true);
+
+                return itemView;
             }
 
-            Transform viewTransform = itemView.transform;
-            viewTransform.SetParent(parent, false);
-            itemView.gameObject.SetActive(true);
-
-            return itemView;
+            return Object.Instantiate(prefab, parent);
         }
 
-        return Object.Instantiate(prefab, parent);
-    }
-
-    public void Release(GalleryItemView itemView)
-    {
-        if (itemView == null)
+        public void Release(GalleryItemView itemView)
         {
-            return;
-        }
+            if (itemView == null)
+                return;
 
-        itemView.gameObject.SetActive(false);
-        _pool.Push(itemView);
+            itemView.gameObject.SetActive(false);
+            _pool.Push(itemView);
+        }
     }
 }

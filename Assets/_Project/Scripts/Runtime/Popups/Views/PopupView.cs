@@ -2,58 +2,49 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-public abstract class PopupView : MonoBehaviour
+namespace MenuWithOnlineGallery.Popups
 {
-    public event Action CloseRequested;
-
-    [Header("Root")]
-    [SerializeField] private RectTransform _root;
+    public abstract class PopupView : MonoBehaviour
+    {
+        public event Action CloseRequested;
     
-    [Header("Input Blocker (optional)")]
-    [SerializeField] private Image _inputBlockerImage;
-
-    protected virtual void Awake()
-    {
-        Hide();
-    }
-
-    public void Show()
-    {
-        if (_root == null)
-        {
-            return;
-        }
-
-        _root.gameObject.SetActive(true);
+        [Header("Root")]
+        [SerializeField] private RectTransform _root;
         
-        EnsureInputBlockingEnabled(true);
-    }
-
-    public void Hide()
-    {
-        if (_root == null)
-        {
-            return;
-        }
-
-        EnsureInputBlockingEnabled(false);
-        
-        _root.gameObject.SetActive(false);
-    }
-
-    protected void RequestClose()
-    {
-        CloseRequested?.Invoke();
-    }
+        [Header("Input Blocker (optional)")]
+        [SerializeField] private Image _inputBlockerImage;
     
-    private void EnsureInputBlockingEnabled(bool isEnabled)
-    {
-        if (_inputBlockerImage == null)
+        protected virtual void Awake()
         {
-            return;
+            Hide();
         }
-
-        _inputBlockerImage.raycastTarget = isEnabled;
-        _inputBlockerImage.enabled = isEnabled;
+    
+        public void Show()
+        {
+            _root?.gameObject.SetActive(true);
+            
+            EnsureInputBlockingEnabled(true);
+        }
+    
+        public void Hide()
+        {
+            EnsureInputBlockingEnabled(false);
+            
+            _root?.gameObject.SetActive(false);
+        }
+    
+        protected void RequestClose()
+        {
+            CloseRequested?.Invoke();
+        }
+        
+        private void EnsureInputBlockingEnabled(bool isEnabled)
+        {
+            if (_inputBlockerImage == null)
+                return;
+    
+            _inputBlockerImage.raycastTarget = isEnabled;
+            _inputBlockerImage.enabled = isEnabled;
+        }
     }
 }

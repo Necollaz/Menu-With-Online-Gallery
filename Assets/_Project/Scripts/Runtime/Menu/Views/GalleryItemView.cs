@@ -1,222 +1,199 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using MenuWithOnlineGallery.Common;
+using MenuWithOnlineGallery.RemoteImages;
 
-[RequireComponent(typeof(Button))]
-public sealed class GalleryItemView : MonoBehaviour
+namespace MenuWithOnlineGallery.Gallery
 {
-    private const bool PRESERVE_ASPECT = true;
-    
-    public event Action<GalleryImageModel> Clicked; 
-    
-    [Header("References")]
-    [SerializeField] private Button _button;
-    [SerializeField] private Image _premiumBadgeImage;
-    [SerializeField] private Image _previewImage;
-
-    [Header("Placeholder")]
-    [SerializeField] private Sprite _placeholderSprite;
-
-    private RemoteTextureLoader _remoteTextureLoader;
-    private ICoroutineRunner _coroutineRunner;
-    
-    private RemoteTextureLoadHandle _loadHandle;
-    private GalleryImageModel _model;
-    
-    private string _requestedUrl;
-    private bool _isBound;
-    private bool _isLoadingEnabled;
-
-    public Sprite CurrentSprite => _previewImage != null ? _previewImage.sprite : null;
-    public GalleryImageModel Model => _model;
-    
-    private void Awake()
+    [RequireComponent(typeof(Button))]
+    public sealed class GalleryItemView : MonoBehaviour
     {
-        _button = GetComponent<Button>();
-    }
+        private const bool PRESERVE_ASPECT = true;
 
-    private void OnEnable()
-    {
-        if (_button != null)
+        public event Action<GalleryImageModel> Clicked;
+
+        [Header("References")]
+        [SerializeField] private Button _button;
+        [SerializeField] private Image _premiumBadgeImage;
+        [SerializeField] private Image _previewImage;
+
+        [Header("Placeholder")]
+        [SerializeField] private Sprite _placeholderSprite;
+
+        private RemoteTextureLoader _remoteTextureLoader;
+        private ICoroutineRunner _coroutineRunner;
+
+        private RemoteTextureLoadHandle _loadHandle;
+        private GalleryImageModel _model;
+
+        private string _requestedUrl;
+        private bool _isBound;
+        private bool _isLoadingEnabled;
+
+        public Sprite CurrentSprite => _previewImage != null ? _previewImage.sprite : null;
+        public GalleryImageModel Model => _model;
+
+        private void Awake()
         {
-            _button.onClick.AddListener(OnClicked);
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (_button != null)
-        {
-            _button.onClick.RemoveListener(OnClicked);
-        }
-        
-        CancelLoading();
-    }
-
-    public void TryBindModel(GalleryImageModel model, RemoteTextureLoader remoteTextureLoader,
-        ICoroutineRunner coroutineRunner)
-    {
-        _model = model;
-        _remoteTextureLoader = remoteTextureLoader;
-        _coroutineRunner = coroutineRunner;
-        
-        _isBound = true;
-        
-        CancelLoading();
-        SetPremiumBadgeVisible(model.IsPremium);
-        SetPlaceholder();
-        
-        _isLoadingEnabled = true;
-        _requestedUrl = null;
-    }
-
-    public void Unbind()
-    {
-        _isBound = false;
-        _isLoadingEnabled = false;
-        
-        CancelLoading();
-        SetPremiumBadgeVisible(false);
-        SetPlaceholder();
-    }
-    
-    public void SetLoadingEnabled(bool isEnabled, bool cancelIfDisabled)
-    {
-        if (!_isBound)
-        {
-            return;
+            _button = GetComponent<Button>();
         }
 
-        if (isEnabled)
+        private void OnEnable()
         {
-            _isLoadingEnabled = true;
-            
-            StartLoadingIfNeeded(_model.Url);
-            
-            return;
+            _button?.onClick.AddListener(OnClicked);
         }
 
-        _isLoadingEnabled = false;
-
-
-        if (cancelIfDisabled)
+        private void OnDisable()
         {
+            _button?.onClick.RemoveListener(OnClicked);
+
             CancelLoading();
+        }
+
+        public void TryBindModel(GalleryImageModel model, RemoteTextureLoader remoteTextureLoader,
+            ICoroutineRunner coroutineRunner)
+        {
+            _model = model;
+            _remoteTextureLoader = remoteTextureLoader;
+            _coroutineRunner = coroutineRunner;
+
+            _isBound = true;
+
+            CancelLoading();
+            SetPremiumBadgeVisible(model.IsPremium);
+            SetPlaceholder();
+
+            _isLoadingEnabled = true;
+            _requestedUrl = null;
+        }
+
+        public void Unbind()
+        {
+            _isBound = false;
+            _isLoadingEnabled = false;
+
+            CancelLoading();
+            SetPremiumBadgeVisible(false);
             SetPlaceholder();
         }
-    }
-    
-    private void StartLoadingIfNeeded(string url)
-    {
-        if (_remoteTextureLoader == null)
+
+        public void SetLoadingEnabled(bool isEnabled, bool cancelIfDisabled)
         {
-            return;
+            if (!_isBound)
+                return;
+
+            if (isEnabled)
+            {
+                _isLoadingEnabled = true;
+
+                StartLoadingIfNeeded(_model.Url);
+
+                return;
+            }
+
+            _isLoadingEnabled = false;
+
+
+            if (cancelIfDisabled)
+            {
+                CancelLoading();
+                SetPlaceholder();
+            }
         }
 
-        if (string.IsNullOrEmpty(url))
+        private void StartLoadingIfNeeded(string url)
         {
-            return;
+            if (_remoteTextureLoader == null)
+                return;
+
+            if (string.IsNullOrEmpty(url))
+                return;
+
+            bool isSameUrlRequested = _requestedUrl == url;
+            bool hasActiveHandle = !_loadHandle.IsEmpty;
+
+            if (isSameUrlRequested && hasActiveHandle)
+                return;
+
+            CancelLoading();
+
+            _requestedUrl = url;
+            _loadHandle = _remoteTextureLoader.TryLoadSprite(url, OnSpriteLoaded, OnSpriteLoadFailed);
         }
 
-        bool isSameUrlRequested = _requestedUrl == url;
-        bool hasActiveHandle = !_loadHandle.IsEmpty;
-
-        if (isSameUrlRequested && hasActiveHandle)
+        private void CancelLoading()
         {
-            return;
+            if (_coroutineRunner != null)
+                _loadHandle.Cancel(_coroutineRunner);
+            else
+                _loadHandle.ReleaseOnly();
+
+            _loadHandle = RemoteTextureLoadHandle.Empty;
+            _requestedUrl = null;
         }
 
-        CancelLoading();
-
-        _requestedUrl = url;
-        _loadHandle = _remoteTextureLoader.TryLoadSprite(url, OnSpriteLoaded, OnSpriteLoadFailed);
-    }
-
-    private void CancelLoading()
-    {
-        if (_coroutineRunner != null)
+        private void SetPremiumBadgeVisible(bool isVisible)
         {
-            _loadHandle.Cancel(_coroutineRunner);
-        }
-        else
-        {
-            _loadHandle.ReleaseOnly();
+            if (_premiumBadgeImage == null)
+                return;
+
+            _premiumBadgeImage.gameObject.SetActive(isVisible);
         }
 
-        _loadHandle = RemoteTextureLoadHandle.Empty;
-        _requestedUrl = null;
-    }
-
-    private void SetPremiumBadgeVisible(bool isVisible)
-    {
-        if (_premiumBadgeImage == null)
+        private void SetPlaceholder()
         {
-            return;
+            if (_previewImage == null)
+                return;
+
+            if (_placeholderSprite == null)
+                return;
+
+            _previewImage.sprite = _placeholderSprite;
+            _previewImage.preserveAspect = PRESERVE_ASPECT;
         }
 
-        _premiumBadgeImage.gameObject.SetActive(isVisible);
-    }
-
-    private void SetPlaceholder()
-    {
-        if (_previewImage == null)
+        private void OnSpriteLoaded(Sprite sprite)
         {
-            return;
+            if (!_isBound || !_isLoadingEnabled)
+            {
+                _loadHandle.ReleaseOnly();
+
+                return;
+            }
+
+            if (_model.Url != _requestedUrl)
+            {
+                _loadHandle.ReleaseOnly();
+
+                return;
+            }
+
+            if (_previewImage == null)
+            {
+                _loadHandle.ReleaseOnly();
+
+                return;
+            }
+
+            _previewImage.sprite = sprite;
+            _previewImage.preserveAspect = PRESERVE_ASPECT;
         }
 
-        if (_placeholderSprite == null)
+        private void OnSpriteLoadFailed(string error)
         {
-            return;
+            if (!_isBound || !_isLoadingEnabled)
+                return;
+
+            SetPlaceholder();
         }
 
-        _previewImage.sprite = _placeholderSprite;
-        _previewImage.preserveAspect = PRESERVE_ASPECT;
-    }
-    
-    private void OnSpriteLoaded(Sprite sprite)
-    {
-        if (!_isBound || !_isLoadingEnabled)
+        private void OnClicked()
         {
-            _loadHandle.ReleaseOnly();
-            
-            return;
-        }
+            if (!_isBound)
+                return;
 
-        if (_model.Url != _requestedUrl)
-        {
-            _loadHandle.ReleaseOnly();
-            
-            return;
+            Clicked?.Invoke(_model);
         }
-
-        if (_previewImage == null)
-        {
-            _loadHandle.ReleaseOnly();
-            
-            return;
-        }
-
-        _previewImage.sprite = sprite;
-        _previewImage.preserveAspect = PRESERVE_ASPECT;
-    }
-    
-    private void OnSpriteLoadFailed(string error)
-    {
-        if (!_isBound || !_isLoadingEnabled)
-        {
-            return;
-        }
-        
-        SetPlaceholder();
-    }
-
-    private void OnClicked()
-    {
-        if (!_isBound)
-        {
-            return;
-        }
-
-        Clicked?.Invoke(_model);
     }
 }

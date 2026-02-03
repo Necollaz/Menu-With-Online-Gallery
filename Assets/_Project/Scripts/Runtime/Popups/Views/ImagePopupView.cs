@@ -1,43 +1,40 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class ImagePopupView : PopupView
+namespace MenuWithOnlineGallery.Popups
 {
-    private const bool PRESERVE_ASPECT = true;
+    public sealed class ImagePopupView : PopupView
+    {
+        private const bool PRESERVE_ASPECT = true;
     
-    [SerializeField] private Image _image;
-    [SerializeField] private Button _closeButton;
+        [SerializeField] private Image _image;
+        [SerializeField] private Button _closeButton;
 
-    private void OnEnable()
-    {
-        if (_closeButton != null)
+        private void OnEnable()
         {
-            _closeButton.onClick.AddListener(OnCloseClicked);
+            _closeButton?.onClick.AddListener(OnCloseClicked);
         }
-    }
 
-    private void OnDisable()
-    {
-        if (_closeButton != null)
+        private void OnDisable()
         {
-            _closeButton.onClick.RemoveListener(OnCloseClicked);
+            _closeButton?.onClick.RemoveListener(OnCloseClicked);
         }
-    }
 
-    public void Show(Sprite sprite)
-    {
-        if (_image != null)
+        public void Show(Sprite sprite)
         {
+            if (_image == null)
+                return;
+            
             _image.sprite = sprite;
             _image.preserveAspect = PRESERVE_ASPECT;
+
+            base.Show();
         }
 
-        base.Show();
-    }
-
-    private void OnCloseClicked()
-    {
-        Hide();
-        RequestClose();
+        private void OnCloseClicked()
+        {
+            Hide();
+            RequestClose();
+        }
     }
 }

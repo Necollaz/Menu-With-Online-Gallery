@@ -1,45 +1,34 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class PremiumPopupView : PopupView
+namespace MenuWithOnlineGallery.Popups
 {
-    [SerializeField] private Button _buyButton;
-    [SerializeField] private Button _closeButton;
-
-    private void OnEnable()
+    public sealed class PremiumPopupView : PopupView
     {
-        if (_buyButton != null)
+        [SerializeField] private Button _buyButton;
+        [SerializeField] private Button _closeButton;
+
+        private void OnEnable()
         {
-            _buyButton.onClick.AddListener(OnBuyClicked);
+            _buyButton?.onClick.AddListener(OnBuyClicked);
+            _closeButton?.onClick.AddListener(OnCloseClicked);
         }
 
-        if (_closeButton != null)
+        private void OnDisable()
         {
-            _closeButton.onClick.AddListener(OnCloseClicked);
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (_buyButton != null)
-        {
-            _buyButton.onClick.RemoveListener(OnBuyClicked);
+            _buyButton?.onClick.RemoveListener(OnBuyClicked);
+            _closeButton?.onClick.RemoveListener(OnCloseClicked);
         }
 
-        if (_closeButton != null)
+        private void OnBuyClicked()
         {
-            _closeButton.onClick.RemoveListener(OnCloseClicked);
+            Debug.Log("Buy Premium clicked");
         }
-    }
 
-    private void OnBuyClicked()
-    {
-        Debug.Log("Buy Premium clicked");
-    }
-
-    private void OnCloseClicked()
-    {
-        Hide();
-        RequestClose();
+        private void OnCloseClicked()
+        {
+            Hide();
+            RequestClose();
+        }
     }
 }
